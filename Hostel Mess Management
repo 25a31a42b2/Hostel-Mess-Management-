@@ -1,0 +1,148 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// Student structure to hold all details
+struct Student {
+    int rollNo;
+    char name[50];
+    int roomNo;
+    char foodType[20];   // Veg or Non-Veg
+    char attendance[20]; // Present or Absent
+    float feesPaid;
+};
+
+// Function prototypes
+void registerStudent();
+void displayAllStudents();
+void markStudentAttendance();
+void checkRooms();
+void showMessMenu();
+
+int main() {
+    int choice;
+    while(1) {
+        printf("\n===========================================");
+        printf("\n   HOSTEL MANAGEMENT SYSTEM - MAIN MENU");
+        printf("\n===========================================");
+        printf("\n1. Register New Student");
+        printf("\n2. View Student Records");
+        printf("\n3. Mark Daily Attendance");
+        printf("\n4. Check Room Availability");
+        printf("\n5. View Mess & Food Menu");
+        printf("\n6. Exit");
+        printf("\nSelect an Option (1-6): ");
+        scanf("%d", &choice);
+
+        switch(choice) {
+            case 1: registerStudent(); break;
+            case 2: displayAllStudents(); break;
+            case 3: markStudentAttendance(); break;
+            case 4: checkRooms(); break;
+            case 5: showMessMenu(); break;
+            case 6: printf("\nExiting... Thank you!\n"); exit(0);
+            default: printf("\nInvalid Selection! Please try again.");
+        }
+    }
+    return 0;
+}
+
+// 1. Register Student Details
+void registerStudent() {
+    FILE *fp = fopen("hostel_records.txt", "a");
+    struct Student s;
+
+    printf("\nEnter Roll Number: ");
+    scanf("%d", &s.rollNo);
+    printf("Enter Full Name: ");
+    scanf("%s", s.name);
+    printf("Enter Room Number Allotted: ");
+    scanf("%d", &s.roomNo);
+    printf("Food Preference (Veg/Non-Veg): ");
+    scanf("%s", s.foodType);
+    printf("Enter Initial Fees Paid: ");
+    scanf("%f", &s.feesPaid);
+    strcpy(s.attendance, "Not-Marked");
+
+    fprintf(fp, "%d %s %d %s %s %.2f\n", s.rollNo, s.name, s.roomNo, s.foodType, s.attendance, s.feesPaid);
+    fclose(fp);
+    printf("\nSuccess: Student registered and data saved to file!");
+}
+
+// 2. View All Student Details
+void displayAllStudents() {
+    FILE *fp = fopen("hostel_records.txt", "r");
+    struct Student s;
+    if (fp == NULL) {
+        printf("\nError: No records found. Please register a student first.");
+        return;
+    }
+    printf("\n--- Registered Students List ---\n");
+    printf("Roll\tName\tRoom\tFood\tFees\tAttendance\n");
+    printf("------------------------------------------------------------\n");
+    while(fscanf(fp, "%d %s %d %s %s %f", &s.rollNo, s.name, &s.roomNo, s.foodType, s.attendance, &s.feesPaid) != EOF) {
+        printf("%d\t%s\t%d\t%s\t%.2f\t%s\n", s.rollNo, s.name, s.roomNo, s.foodType, s.feesPaid, s.attendance);
+    }
+    fclose(fp);
+}
+
+// 3. Attendance System
+void markStudentAttendance() {
+    int rNo, found = 0;
+    struct Student s;
+    FILE *fp = fopen("hostel_records.txt", "r");
+    FILE *temp = fopen("temp.txt", "w");
+
+    if (fp == NULL) {
+        printf("\nNo records found!");
+        return;
+    }
+
+    printf("\nEnter Roll Number to mark Attendance: ");
+    scanf("%d", &rNo);
+
+    while(fscanf(fp, "%d %s %d %s %s %f", &s.rollNo, s.name, &s.roomNo, s.foodType, s.attendance, &s.feesPaid) != EOF) {
+        if(s.rollNo == rNo) {
+            found = 1;
+            printf("Mark Status for %s (Present/Absent): ", s.name);
+            scanf("%s", s.attendance);
+        }
+        fprintf(temp, "%d %s %d %s %s %.2f\n", s.rollNo, s.name, s.roomNo, s.foodType, s.attendance, s.feesPaid);
+    }
+    fclose(fp);
+    fclose(temp);
+    remove("hostel_records.txt");
+    rename("temp.txt", "hostel_records.txt");
+
+    if(found) printf("\nAttendance updated successfully!");
+    else printf("\nStudent with Roll No %d not found.", rNo);
+}
+
+// 4. Room Availability
+void checkRooms() {
+    int maxRooms = 100; // Let's assume hostel has 100 rooms
+    int occupied = 0;
+    struct Student s;
+    FILE *fp = fopen("hostel_records.txt", "r");
+    
+    while(fp != NULL && fscanf(fp, "%d %s %d %s %s %f", &s.rollNo, s.name, &s.roomNo, s.foodType, s.attendance, &s.feesPaid) != EOF) {
+        occupied++;
+    }
+    if(fp != NULL) fclose(fp);
+
+    printf("\n--- Room Status ---");
+    printf("\nTotal Room Capacity: %d", maxRooms);
+    printf("\nRooms Occupied     : %d", occupied);
+    printf("\nRooms Available    : %d\n", maxRooms - occupied);
+}
+
+// 5. Mess and Food Details
+void showMessMenu() {
+    printf("\n--- HOSTEL MESS DETAILS ---");
+    printf("\n1. Breakfast (08:00 AM): South Indian (Idly/Dosa)");
+    printf("\n2. Lunch     (01:00 PM): Full Meals (Rice, Dal, Veg Curry)");
+    printf("\n3. Snacks    (05:00 PM): Tea & Biscuits");
+    printf("\n4. Dinner    (08:00 PM): Roti/Rice & Special Curry");
+    printf("\nNote: Non-Veg served on Sundays and Wednesdays.");
+    printf("\n----------------------------\n");
+}
